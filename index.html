@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Natacha & Léa — Double anniv</title>
 <meta name="description" content="T'es invité·e au double anniversaire de Natacha & Léa !">
 <meta property="og:title" content="Natacha & Léa — Double anniv 🎉">
@@ -92,7 +92,8 @@ section{padding:90px 0}
 @keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
 /* ---------- marquee ---------- */
-.marquee{background:var(--lime);color:#0a0a10;overflow:hidden;transform:rotate(-2deg);margin:-10px -20px 0;padding:14px 0;position:relative;z-index:3}
+.marquee-clip{position:relative;z-index:3;overflow:hidden;margin-top:-26px;padding:16px 0}
+.marquee{background:var(--lime);color:#0a0a10;overflow:hidden;transform:rotate(-2deg);margin:0 -20px;padding:14px 0}
 .marquee-track{display:flex;width:max-content;animation:marq 22s linear infinite;will-change:transform}
 .motion .marquee-track{animation:none}
 .marquee-track span{font-family:var(--display);text-transform:uppercase;font-size:clamp(1.1rem,3.5vw,1.6rem);padding-right:1.2em;white-space:nowrap}
@@ -344,7 +345,7 @@ footer{position:absolute;left:0;right:0;bottom:0;text-align:center;color:var(--m
 .motion .scroll-hint{display:none}
 
 /* ---------- flèche "continuer" ---------- */
-.next{position:fixed;left:50%;bottom:22px;translate:-50% 0;z-index:140;width:58px;height:58px;border-radius:50%;border:none;padding:0;cursor:pointer;display:grid;place-items:center;color:#fff;
+.next{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom, 0px));translate:-50% 0;z-index:140;width:58px;height:58px;border-radius:50%;border:none;padding:0;cursor:pointer;display:grid;place-items:center;color:#fff;
   background:rgba(12,12,20,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.4);
   transition:opacity .45s var(--ease),translate .45s var(--ease)}
 .next::before{content:"";position:absolute;inset:-2px;border-radius:50%;padding:2px;background:conic-gradient(var(--pink),var(--violet),var(--lime),var(--pink));
@@ -382,7 +383,7 @@ footer{position:absolute;left:0;right:0;bottom:0;text-align:center;color:var(--m
   .tag.t2{bottom:calc(7% - 18px)}
 }
 @media (max-width:520px){
-  .next{width:50px;height:50px;bottom:16px}
+  .next{width:50px;height:50px;bottom:calc(14px + env(safe-area-inset-bottom, 0px))}
   .dots{right:5px;gap:8px}
   .dots button{width:7px;height:7px}
   .dots button.on{height:20px}
@@ -543,7 +544,7 @@ button,a{-webkit-tap-highlight-color:transparent}
   <a href="#infos" class="scroll-hint" aria-label="Voir les infos"><span></span>Scroll</a>
 </header>
 
-<div class="marquee" aria-hidden="true"><div class="marquee-track" id="marquee"></div></div>
+<div class="marquee-clip" aria-hidden="true"><div class="marquee"><div class="marquee-track" id="marquee"></div></div></div>
 
 <!-- INFOS -->
 <section id="infos" class="sec">
@@ -738,10 +739,10 @@ const CONFIG = {
   // par : 0 = 1re personne, 1 = 2e personne
   playlistUrl: "",                        // lien Spotify / Deezer de la vraie playlist (optionnel)
   playlist: [
-    { titre: "Alors on danse",     artiste: "Stromae",            par: 0 },
+    { titre: "Freed from Desire",  artiste: "Gala",               par: 1 },
+    { titre: "Soirée disco",       artiste: "Boris",              par: 0 },
     { titre: "Dancing Queen",      artiste: "ABBA",               par: 1 },
     { titre: "Djadja",             artiste: "Aya Nakamura",       par: 0 },
-    { titre: "Freed from Desire",  artiste: "Gala",               par: 1 },
     { titre: "Espresso",           artiste: "Sabrina Carpenter",  par: 0 },
     { titre: "Mr. Brightside",     artiste: "The Killers",        par: 1 },
     { titre: "Wannabe",            artiste: "Spice Girls",        par: 0 },
@@ -1266,7 +1267,8 @@ if (!RM) {
 
     // Sections : arrivent comme une carte qui s'élargit et recouvre la précédente
     secs.forEach(s => {
-      const e = clamp((vh - (s._top - y)) / (vh * .6));
+      // tout en bas de la page, les sections visibles sont forcément entièrement affichées
+      const e = y >= maxY - 2 && s._top < y + vh ? 1 : clamp((vh - (s._top - y)) / (vh * .6));
       if (e >= 1) { if (s._on) { s.style.clipPath = s.style.transform = ""; s._on = false; } return; }
       const k = 1 - easeOut(e);
       s.style.clipPath = `inset(-100px ${k * 7}% 0 round 40px)`;

@@ -403,7 +403,7 @@ footer{position:absolute;left:0;right:0;bottom:0;text-align:center;color:var(--m
 /* ---------- mobile : chaque section tient sur un écran ---------- */
 button,a{-webkit-tap-highlight-color:transparent}
 @media (max-width:600px){
-  .motion .sec:not(.pin){padding:46px 0 86px}
+  .motion .sec:not(.pin){padding:46px 0 calc(92px + env(safe-area-inset-bottom, 0px))}
   .h2{margin:8px 0 18px}
   .kicker{font-size:.68rem}
 
@@ -512,7 +512,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 }
 /* ---------- petits écrans (iPhone SE…) : version encore plus compacte ---------- */
 @media (max-width:600px) and (max-height:740px){
-  .motion .sec:not(.pin){padding:34px 0 84px}
+  .motion .sec:not(.pin){padding:34px 0 calc(88px + env(safe-area-inset-bottom, 0px))}
   .h2{font-size:2.15rem;margin:6px 0 14px}
 
   /* infos */
@@ -538,10 +538,10 @@ button,a{-webkit-tap-highlight-color:transparent}
   .rsvp{gap:10px}
   .rsvp .h2{font-size:2rem}
   .rsvp-lead{font-size:.78rem}
-  .form{padding:14px;gap:10px}
+  .form{padding:14px;gap:9px}
   .field label,.field .lbl{margin-bottom:4px}
   .input{padding:9px 12px}
-  textarea.input{min-height:46px}
+  textarea.input{min-height:40px}
   .seg button{display:flex;align-items:center;justify-content:center;gap:5px;padding:10px 4px}
   .seg button .e{display:inline;margin:0;font-size:1rem}
   .stepper button{width:32px;height:32px}
@@ -1192,6 +1192,7 @@ if (!RM) {
   new ResizeObserver(layout).observe(document.body);
   addEventListener("resize", layout);
   addEventListener("load", layout);
+  if (document.fonts) document.fonts.ready.then(layout);
 
   /* ---------- scroll section par section ---------- */
   const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -1290,7 +1291,7 @@ if (!RM) {
     if (b) goTo(docTop(navSecs[+b.dataset.i][0]));
   });
 
-  (function frame(){
+  function tick(){
     const y = scrollY;
     vel = vel * .85 + (y - lastY) * .15;
     if (y !== lastY) dir = y > lastY ? 1 : -1;
@@ -1301,10 +1302,19 @@ if (!RM) {
     let di = 0;
     navTops.forEach((t, i) => { if (t <= y + vh * .5) di = i; });
     if (di !== curDot) { dotBtns.forEach((b, i) => b.classList.toggle("on", i === di)); curDot = di; }
+    // Vérification au repos : si le contenu de la section affichée descend dans la zone
+    // de la flèche (police chargée tard, changement de taille…), on recalcule
+    if (!anim && frameN % 30 === 15) {
+      const fw = fitWraps.find(([sec]) => sec._top <= y + 2 && sec._top + sec.offsetHeight > y + 2);
+      if (fw && !fw[0]._on) {
+        const padB = parseFloat(getComputedStyle(fw[0]).paddingBottom);
+        if (fw[1].getBoundingClientRect().bottom > vh - padB + 2 && (+fw[1].style.zoom || 1) > .73) layout();
+      }
+    }
     if (!(frameN++ % 6)) {
       const r = nextBtn.getBoundingClientRect(), cy = r.top + r.height / 2;
       overlap = [r.left + 6, r.left + r.width / 2, r.right - 6].some(x =>
-        document.elementsFromPoint(x, cy).some(el => !nextBtn.contains(el) && el.closest("button, a, input, textarea, label, .chip, .seg")));
+        document.elementsFromPoint(x, cy).some(el => !nextBtn.contains(el) && el.closest("button, a, input, textarea, label, p, .chip, .seg, .card, .queen, .step, .tracks, .vote-card, .form, .player, .vinyl-wrap, .mega, .chips, .h2")));
     }
     const end = (stops.length > 0 && y >= stops[stops.length - 1] - 4) || (overlap && !anim);
     if (end !== atEnd) { nextBtn.classList.toggle("hide", end); atEnd = end; }
@@ -1355,7 +1365,9 @@ if (!RM) {
     const f = clamp((vh - (finTop - y)) / (vh * .7));
     mega.style.scale = .5 + .5 * easeOut(f);
     mega.style.opacity = clamp(f * 1.6);
-
+  }
+  (function frame(){
+    try { tick(); } catch (err) { console.error(err); }
     requestAnimationFrame(frame);
   })();
 }
